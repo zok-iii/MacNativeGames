@@ -1,0 +1,36 @@
+name: Compilar TOTK iOS
+on:
+  workflow_dispatch:
+    inputs:
+      game_url:
+        description: 'Enlace de descarga directa de totk.xci'
+        required: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar herramientas
+        run: |
+          brew install opus libvpx python@3.12
+
+      - name: Descargar juego
+        run: |
+          curl -L -o totk.xci "${{ github.event.inputs.game_url }}"
+
+      - name: Restaurar prod.keys
+        run: |
+          echo "${{ secrets.PROD_KEYS }}" > prod.keys
+
+      - name: Compilar IPA para iPhone
+        run: |
+          python3 build_app.py totk.xci -k prod.keys --platform ios -o TOTK_iOS.ipa
+
+      - name: Subir IPA terminado
+        uses: actions/upload-artifact@v4
+        with:
+          name: TOTK_iOS
+          path: TOTK_iOS.ipa
